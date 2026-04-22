@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Reverse Sequence Game</title>
+    <link rel="stylesheet" href="memoryGame.css">
+</head>
+<body>
+
+    <div id="startScreen">
+    <h1>Reverse Memory Game 🔥</h1>
+
+    <div class="rulesBox">
+        <p>🎮 Rules:</p>
+        <p>1. Watch the numbers carefully</p>
+        <p>2. Enter them in REVERSE order</p>
+        <p>3. Each correct answer increases level</p>
+        <p>4. Score +10 each round</p>
+        <p>5. You have limited time ⏳</p>
+    </div>
+
+    <button id="readyBtn">👉 I’m Ready to Play</button>
+</div>
+    <div id="gameContainer">       
+        <h2 id="statusText">Level: 1 | Score: 0</h2>
+        <h2 id="timerText">Time: 8</h2>
+        <div id="displayBox">?</div><br><br>
+        <input type="text" id="userInput" placeholder="Enter reverse sequence"> &nbsp;
+        <button id="submitBtn" background="black">Submit</button>
+    </div>
+<audio id="correctSound" src="correct.mp3"></audio>
+<audio id="wrongSound" src="wrong.mp3"></audio>
+<div id="gameOverScreen">
+    <h1>Game Over ❌</h1>
+    <h2 id="finalStats"></h2>
+
+    <button id="playAgainBtn">🔁 Play Again</button>
+    <button id="rulesBtn">📜 Back to Rules</button>
+</div>
+<!-- Java Script -->
+<script>
+let sequence = [];
+let level = 1;
+let isShowing = false;
+let gameOver = false;
+document.getElementById("readyBtn").onclick = function() {
+
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("gameContainer").style.display = "block";
+
+    let box = document.getElementById("displayBox");
+
+    box.style.fontSize = "30px"; 
+    box.innerText = "Get Ready...";
+
+    setTimeout(() => {
+        
+        startGame();
+    }, 2000);
+};
+
+
+let score=0;
+function startGame() {
+    gameOver = false;
+    clearInterval(timer); // reset timer
+    level = 1;
+    score=0;
+    document.getElementById("statusText").innerText = "Level: 1 | Score: 0";
+    nextLevel();
+}
+
+// Go to next level
+function nextLevel() {
+    sequence = []; // reset
+    let length = level + 1;
+
+    // create random numbers
+    for (let i = 0; i < length; i++) {
+        sequence.push(Math.floor(Math.random() * 10));
+    }
+
+    showSequence();
+}
+
+function showSequence() {
+    isShowing = true;
+    document.getElementById("timerText").innerText = "Watch Carefully 👀";
+    let i = 0;
+
+    // ⏳ delay before showing sequence
+    setTimeout(() => {
+
+        let interval = setInterval(function() {
+
+            let box = document.getElementById("displayBox");
+
+            box.innerText = sequence[i];
+
+            // animation
+            box.classList.add("active");
+            setTimeout(() => {
+                box.classList.remove("active");
+            }, 300);
+
+            i++;
+
+            if (i >= sequence.length) {
+                clearInterval(interval);
+
+                setTimeout(function() {
+                    document.getElementById("displayBox").innerText = "?";
+                    isShowing = false;
+                    startTimer(); // ⏱️ timer starts AFTER sequence
+                }, 500);
+            }
+
+        }, 800);
+
+    }, 2000); // ⏳ 2 sec delay before sequence
+}
+
+
+document.getElementById("submitBtn").onclick = function () {
+    if (isShowing || gameOver) return;
+    clearInterval(timer); // ✅ stop timer immediately
+
+    let user = document.getElementById("userInput").value;
+    let correct = sequence.slice().reverse().join("");
+
+    let correctSound = document.getElementById("correctSound");
+    let wrongSound = document.getElementById("wrongSound");
+
+    if (user == correct) {
+
+    correctSound.currentTime = 0;
+    correctSound.play();
+
+    level++;
+    score += 10;
+
+    document.getElementById("statusText").innerText =
+    "Level: " + level + " | Score: " + score;
+
+    document.getElementById("userInput").value = "";
+
+    document.getElementById("timerText").innerText = "Watch Carefully 👀"; // ✅ RESET UI
+
+    setTimeout(() => {
+        nextLevel();
+    }, 500);
+    }
+    else {
+
+        // 🔊 play wrong sound
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+        gameOver = true;
+        showGameOver();
+        document.getElementById("displayBox").innerText = "?";
+        document.getElementById("userInput").value = "";
+    }
+};
+document.getElementById("userInput").addEventListener("keydown", function(e) {
+
+    if (e.key === "Enter") {
+        document.getElementById("submitBtn").click(); // ✅ triggers submit
+    }
+
+});
+let baseTime = 8;
+let timer;
+
+function startTimer() {
+    clearInterval(timer); // ✅ IMPORTANT: clear old timer first
+    document.getElementById("userInput").focus();
+    timeLeft = baseTime + (level - 1);
+    document.getElementById("timerText").innerText = "Time: " + timeLeft;
+
+    timer = setInterval(function() {
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            gameOver = true; 
+            document.getElementById("wrongSound").currentTime = 0;
+            document.getElementById("wrongSound").play();
+            document.getElementById("userInput").value = ""; // 👈 ADD THIS
+            showGameOver();
+
+            return; // ✅ STOP EXECUTION HERE
+        }
+
+        timeLeft--; // ⬅️ move AFTER check
+
+        document.getElementById("timerText").innerText = "Time: " + timeLeft;
+
+    }, 1000);
+}
+function showGameOver() {
+    clearInterval(timer); 
+    document.getElementById("gameContainer").style.display = "none";
+    document.getElementById("gameOverScreen").style.display = "flex";
+
+    document.getElementById("finalStats").innerText =
+        "Level Reached: " + level + " | Score: " + score;
+}
+// Play Again
+document.getElementById("playAgainBtn").onclick = function() {
+
+    document.getElementById("gameOverScreen").style.display = "none";
+    document.getElementById("gameContainer").style.display = "block";
+
+    startGame();
+};
+
+// Back to Rules
+document.getElementById("rulesBtn").onclick = function() {
+
+    document.getElementById("gameOverScreen").style.display = "none";
+    document.getElementById("startScreen").style.display = "flex";
+
+    document.getElementById("gameContainer").style.display = "none";
+    // document.getElementById("startBtn").style.display = "block";
+};
+</script>
+</body>
+</html>
